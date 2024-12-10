@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>welcome page</title>
+</head>
+<body>
+    {% if session.get('username') %}
+    <h1>Welcome to electronic shop</h1>
+    <p>hello, {{ username }} you are already logged in.</p>
+    {% endif %}
+
+
+        <button>view products</button><br><br>
+        <button>view cart</button><br><br>
+        <a href="{{ url_for('logout') }}">
+        <button>logout</button>
+        </a><br><br>
+   
+
+    
+    
+</body>
+</html>
