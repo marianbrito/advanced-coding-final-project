@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/checkout.css') }}">
+</head>
+<body>
+    <div class="checkout">
+        <h1>Checkout</h1>
+
+        {% if cart_items %}
+        <div class="cart-items">
+            {% for item in cart_items %}
+            <div class="cart-item">
+                <img src="{{ url_for('static', filename='images/product-images/' ~ item[4]) }}" alt="{{ item[1] }}">
+                <div class="cart-details">
+                    <h4>{{ item[1] }}</h4>
+                    <p>Price: €{{ item[2] }}</p>
+                    <p>Quantity: {{ item[3] }}</p>
+                </div>
+            </div>            
+            {% endfor %}
+        </div>
+        <div class="total">
+            <strong>Total: €{{ total_price }}</strong>
+        </div>
+
+        <form action="{{ url_for('finalize_checkout') }}" method="POST" class="checkout-form">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="address">Shipping Address</label>
+            <input type="text" id="address" name="address" required>
+            
+            <label for="payment">Payment Method</label>
+            <select id="payment" name="payment" required>
+                <option value="credit-card">Credit Card</option>
+                <option value="paypal">PayPal</option>
+            </select>
+            
+            <button type="submit" class="button-50">Complete Purchase</button>
+        </form>        
+        {% else %}
+        <p>Your cart is empty. <a href="{{ url_for('products') }}">Go back to products</a>.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
+
+</html>
+
+

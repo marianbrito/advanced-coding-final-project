@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Cart</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/products.css') }}">
+</head>
+<body>
+    <h1 style="color: white;">Your Shopping Cart</h1>
+    <div class="products">
+        {% if cart_items %}
+            {% for item in cart_items %}
+                <div class="each-product">
+                    <!-- Image -->
+                    <img src="{{ url_for('static', filename='images/product-images/' ~ item[4]) }}" alt="{{ item[1] }}">
+                    
+                    <!-- Name -->
+                    <p><strong>{{ item[1] }}</strong></p>
+                    
+                    <p>price: €{{ item[2] }}</p>
+                    
+                    <p>quantity: {{ item[3] }}</p>
+                    
+                    <p>total: €{{ item[2] * item[3] }}</p>
+                    
+                    <form action="{{ url_for('remove_from_cart', product_id=item[0]) }}" method="GET">
+                        <button class="button-50" role="button">remove</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Your cart is empty! <a href="{{ url_for('products') }}">Go Shopping</a></p>
+        {% endif %}
+    </div>
+
+    {% if cart_items %}
+        <h3 style="color: white">Total Price: €{{ total_price }}</h3>
+        <a href="{{ url_for('checkout') }}" class="checkout-button">Proceed to Checkout</a>
+    {% endif %}
+</body>
+</html>

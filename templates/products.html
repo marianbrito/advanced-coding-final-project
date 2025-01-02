@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Gallery</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/products.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <h1 style="color: white;">PRODUCT GALLERY</h1>
+    <p style="color:beige">Explore our curated collection of top-quality products, designed to meet your needs and style. </p>
+    <p style="color:beige">Browse through a variety of categories, view stunning visuals, and find detailed information to make the perfect choice. Start shopping now!</p>
+    <div class="products">
+        {% for product in products %}
+            <div class="each-product">
+                <img src="{{ url_for('static', filename='images/product-images/' ~ product[3]) }}" alt="{{ product[1] }}">
+                
+                <!-- Product Name -->
+                <p><strong>{{ product[1] }}</strong></p> 
+                
+                <!-- Price -->
+                <p>{{ product[2] }} €</p>
+
+                <label for="quantity"></label>
+                  <input type="number" name="quantity" class="bordered-input" value="1" min="1" required>
+                
+                
+                <form action="{{ url_for('add_to_cart', product_id=product[0]) }}" method="POST">
+                    <button class="button-50" role="button">Add to cart</button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+    
+
+    <a href="/view_cart" class="cart-logo">
+        <i class="fas fa-shopping-cart"></i>
+    </a>
+    <a href="/logout" class="logout">
+        <i class="fas fa-sign-out-alt"></i>
+    </a>
+</body>
+</html>
