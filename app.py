@@ -12,55 +12,75 @@ app.config["MYSQL_DB"] = 'flask_users'
 mysql = MySQL(app)
     
 class database:
-    def __init__(self,mysql):
-        self.mysql = mysql
+    def __init__(self, db):
+        self.db = db
 
-    def execute(self, query, params=None):
-        cur = self.mysql.connection.cursor()
-        cur.execute(query,params)
-        self.mysql.connection.commit()
+    def execute(self, query, parameters=None):
+        cur = self.db.connection.cursor()
+        cur.execute(query,parameters)
+        self.db.connection.commit()
         cur.close()
     
-    def fetchall(self, query, params=None):
-        cur = self.mysql.connection.cursor()
-        cur.execute(query,params)
+    def fetchall(self, query, parameters=None):
+        cur = self.db.connection.cursor()
+        cur.execute(query,parameters)
         results = cur.fetchall()
         cur.close()
         return results
     
-    def fetchone(self, query, params=None):
-        cur = self.mysql.connection.cursor()
-        cur.execute(query, params)
+    def fetchone(self, query, parameters=None):
+        cur = self.db.connection.cursor()
+        cur.execute(query, parameters)
         results = cur.fetchone()
         cur.close()
         return results
     
-db = database(mysql)
 
-class user:
-    def __init__(self, username=None, user_id=None, password=None):
-        self.user_id = user_id
-        self.username = username 
-        self.password = password
-
-    def login(username, password):
+class user(database):
+     def login(self, username, password):
         query ="SELECT user_id, username, password FROM tbl_users WHERE username = %s AND password = %s"
-        user_data = db.fetchone(query, (username,password))
-
-        if user_data:
-            if user_data[2] == password: 
-                return user(username=user_data[1], user_id=user_data[0], password=user_data[2])
-        return None
-         
-    
-    def register(username, password):
+        user_data = self.fetchone(query, (username,password))
+        return user_data
+     
+     def register(self, username, password):
         insert_query ="INSERT INTO tbl_users (username, password) VALUES (%s, %s)" 
-        db.execute(insert_query, (username, password))
+        self.execute(insert_query, (username, password))
 
         query = "SELECT user_id FROM tbl_users WHERE username = %s"
-        user_id = db.fetchone(query,(username,))
+        user_id = self.fetchone(query,(username,))
 
         return user_id
+
+class product(database):
+    def products(self):
+        query = "SELECT product_id, name, price, image FROM tbl_products"
+        return self.fetchall(query)
+
+class cart(database):
+    def view_cart(self, user_id): 
+        query = """SELECT tbl_shopppingcart.cart_id, tbl_products.name, tbl_products.price, tbl_shopppingcart.quantity, tbl_products.image 
+                    FROM tbl_shopppingcart 
+                    JOIN tbl_products ON tbl_shopppingcart.product_id = tbl_products.product_id WHERE tbl_shopppingcart.user_id = %s"""
+        
+        return self.fetchall(query, (user_id, ))
+    
+    def add_to_cart(self, user_id, product_id, quantity):
+        select_query = "SELECT cart_id, quantity FROM tbl_shopppingcart WHERE user_id = %s AND product_id = %s"
+        cart_item = self.fetchone(select_query, (user_id, product_id))
+
+        if cart_item:
+            update_query = "UPDATE tbl_shopppingcart SET quantity = quantity + %s WHERE user_id = %s AND product_id = %s"
+            self.execute(update_query,(quantity, user_id, product_id))
+            
+        else:
+            insert_query = "INSERT INTO tbl_shopppingcart (user_id, product_id, quantity) VALUES (%s, %s, %s)"
+            self.execute(insert_query, (user_id, product_id, quantity))
+
+        return redirect(url_for('view_cart'))
+
+    def remove_from_cart(self, product_id):
+        delete_query = "DELETE FROM tbl_shopppingcart WHERE cart_id = %s"
+        return self.execute(delete_query, (product_id, ))
 
 @app.route('/')
 def home():
@@ -72,10 +92,12 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        user_login = user.login(username, password)
+        user_class = user(mysql)
+        user_login = user_class.login(username, password)
+
         if user_login:
-            session['username'] = user_login.username
-            session['user_id'] = user_login.user_id
+            session['username'] = user_login[1]
+            session['user_id'] = user_login[0]
             return render_template('welcome.html', username=session['username'])
         else:
             return render_template('login.html', error='Invalid username or password')
@@ -88,7 +110,8 @@ def register():
         username = request.form['username']
         password = request.form ['password']
 
-        user_id = user.register(username, password)
+        user_class = user(mysql)
+        user_id = user_class.register(username, password)
         session['username'] = username
         session['user_id'] = user_id  
         return redirect(url_for('login'))
@@ -107,8 +130,8 @@ def welcome():
 
 @app.route('/products')
 def products():
-    query = "SELECT product_id, name, price, image FROM tbl_products"
-    products = db.fetchall(query)
+    products_class = product(mysql)
+    products = products_class.products()
     return render_template('products.html', products=products)
 
 
@@ -120,16 +143,8 @@ def add_to_cart(product_id):
 
     quantity = int(request.form.get('quantity', 1))
 
-    select_query = "SELECT cart_id, quantity FROM tbl_shopppingcart WHERE user_id = %s AND product_id = %s"
-    cart_item = db.fetchone(select_query, (user_id, product_id))
-
-    if cart_item:
-        update_query = "UPDATE tbl_shopppingcart SET quantity = quantity + %s WHERE user_id = %s AND product_id = %s"
-        db.execute(update_query,(quantity, user_id, product_id))
-        
-    else:
-        insert_query = "INSERT INTO tbl_shopppingcart (user_id, product_id, quantity) VALUES (%s, %s, %s)"
-        db.execute(insert_query, (user_id, product_id, quantity))
+    cart_class = cart(mysql)
+    cart_class.add_to_cart(user_id, product_id, quantity)
 
     return redirect(url_for('view_cart'))
 
@@ -140,12 +155,8 @@ def view_cart():
         return redirect(url_for('login'))  
 
     user_id = session['user_id'] 
-    
-    query = """SELECT tbl_shopppingcart.cart_id, tbl_products.name, tbl_products.price, tbl_shopppingcart.quantity, tbl_products.image 
-                FROM tbl_shopppingcart 
-                JOIN tbl_products ON tbl_shopppingcart.product_id = tbl_products.product_id WHERE tbl_shopppingcart.user_id = %s"""
-    
-    cart_items = db.fetchall(query, (user_id, ))
+    cart_class = cart(mysql)
+    cart_items = cart_class.view_cart(user_id)
 
     total_price = sum(item[2] * item[3] for item in cart_items)  
 
@@ -157,8 +168,8 @@ def remove_from_cart(product_id):
     if 'username' not in session:
         return redirect(url_for('login'))  
     
-    delete_query = "DELETE FROM tbl_shopppingcart WHERE cart_id = %s"
-    db.execute(delete_query, (product_id, ))
+    cart_class = cart(mysql)
+    cart_class.remove_from_cart(product_id)
 
     return redirect(url_for('view_cart'))
 
@@ -168,11 +179,8 @@ def checkout():
         return redirect(url_for('login'))  
 
     user_id = session['user_id']
-   
-    query = """SELECT tbl_shopppingcart.cart_id, tbl_products.name, tbl_products.price, tbl_shopppingcart.quantity, tbl_products.image FROM tbl_shopppingcart
-                JOIN tbl_products ON tbl_shopppingcart.product_id = tbl_products.product_id WHERE tbl_shopppingcart.user_id = %s"""
-    
-    cart_items = db.fetchall(query, (user_id, ))
+    cart_class = cart(mysql)
+    cart_items = cart_class.view_cart(user_id)
 
     total_price = sum(item[2] * item[3] for item in cart_items)
 
@@ -181,7 +189,6 @@ def checkout():
 
 @app.route('/finalize_checkout', methods=['POST'])
 def finalize_checkout():
-
     if request.method == 'POST':
         name = request.form.get('name')
         address = request.form.get('address')
@@ -194,11 +201,12 @@ def finalize_checkout():
     if not user_id:
         return redirect(url_for('login'))
 
+    cart_class = cart(mysql)
     insert_query = "INSERT INTO tbl_orders (user_id, name, address, payment_method) VALUES (%s, %s, %s, %s)"
-    db.execute(insert_query, (user_id, name, address, payment_method))
+    cart_class.execute(insert_query, (user_id, name, address, payment_method))
 
     delete_query = "DELETE FROM tbl_shopppingcart WHERE user_id = %s"
-    db.execute(delete_query, (user_id, ))
+    cart_class.execute(delete_query, (user_id,))
 
     return redirect(url_for('confirmation'))
 
