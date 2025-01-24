@@ -1,6 +1,5 @@
 # ADVANCED CODING FINAL PROJECT
-<<<<<<< HEAD
-=======
+
 ElectroHub is a Flask e-commerce application developed for the final advanced coding project. The application provides functionality for user registration, login, product browsing, cart management, and checkout.
 
 # Table of Contents
