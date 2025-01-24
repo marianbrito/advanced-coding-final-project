@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Orders</title>
+    <style>
+        .order-container {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .item img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>My Orders</h1>
+    {% if orders %}
+        {% for order_id, order in orders.items() %}
+        <div class="order-container">
+            <h2>Order ID: {{ order_id }}</h2>
+            <p>Order Date: {{ order.order_date }}</p>
+            <p>Customer Name: {{ order.customer_name }}</p>
+            <p>Address: {{ order.address }}</p>
+            <p>Payment Method: {{ order.payment_method }}</p>
+            <h3>Items:</h3>
+            {% for item in order.items %}
+            <div class="item">
+                <img src="{{ item.image }}" alt="{{ item.product_name }}">
+                <div>
+                    <p>Product: {{ item.product_name }}</p>
+                    <p>Price: ${{ item.price }}</p>
+                    <p>Quantity: {{ item.quantity }}</p>
+                    <p>Total: ${{ item.total_price }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>You have no orders yet.</p>
+    {% endif %}
+</body>
+</html>

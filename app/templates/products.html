@@ -21,11 +21,10 @@
                 <!-- Price -->
                 <p>{{ product[2] }} €</p>
 
-                <label for="quantity"></label>
-                  <input type="number" name="quantity" class="bordered-input" value="1" min="1" required>
-                
-                
                 <form action="{{ url_for('add_to_cart', product_id=product[0]) }}" method="POST">
+                    <label for="quantity"></label>
+                    <input type="number" name="quantity" class="bordered-input" value="1" min="1">
+                    
                     <button class="button-50" role="button">Add to cart</button>
                 </form>
             </div>
